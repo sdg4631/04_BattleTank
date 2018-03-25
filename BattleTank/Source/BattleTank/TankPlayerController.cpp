@@ -42,33 +42,28 @@ void ATankPlayerController::AimTowardsCrosshair()
 {
 	if (!GetControlledTank()) { return; }
 
-	FVector OutHitLocation; // Out parameter
-	if (GetSightRayHitLocation(OutHitLocation)) // Has "side effect", is going to line trace
+	FVector HitLocation; // Out parameter
+	if (GetSightRayHitLocation(HitLocation)) // Has "side effect", is going to line trace
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit location: %s"), *OutHitLocation.ToString());
-
-		//  TODO Tell controlled tank to aim at this point
+		GetControlledTank()->AimAt(HitLocation);
 	}
 }
 
 // Get world location if linetrace through crosshair, true if hits landscape
-bool ATankPlayerController::GetSightRayHitLocation(FVector & OutHitLocation) const
+bool ATankPlayerController::GetSightRayHitLocation(FVector & HitLocation) const
 {
 	// Find the crosshair position in pixel coordinates
 	int32 ViewportSizeX, ViewportSizeY;
 	GetViewportSize(ViewportSizeX, ViewportSizeY);
 	auto ScreenLocation = FVector2D(ViewportSizeX * CrossHairXLocation, ViewportSizeY * CrossHairYLocation);
 	
-
 	// "De-Project" the screen position of the crosshair to a world direction 
 	FVector LookDirection;
 	if (GetLookDirection(ScreenLocation, LookDirection))
 	{
 		// Line trace along that LookDirection, and see what we hit (up to a max range)
-		GetLookVectorHitLocation(LookDirection, OutHitLocation);
+		GetLookVectorHitLocation(LookDirection, HitLocation);
 	}
-
-	
 	return true;
 }
 
@@ -76,7 +71,6 @@ bool ATankPlayerController::GetSightRayHitLocation(FVector & OutHitLocation) con
 bool ATankPlayerController::GetLookDirection(FVector2D ScreenLocation, FVector& LookDirection) const
 {
 	FVector CameraWorldLocation; // To be discarded
-
 	return DeprojectScreenPositionToWorld
 	(
 		ScreenLocation.X, 
@@ -84,10 +78,9 @@ bool ATankPlayerController::GetLookDirection(FVector2D ScreenLocation, FVector& 
 		CameraWorldLocation, 
 		LookDirection
 	);
-	
 }
 
-bool ATankPlayerController::GetLookVectorHitLocation(FVector LookDirection, FVector& OutHitLocation) const
+bool ATankPlayerController::GetLookVectorHitLocation(FVector LookDirection, FVector& HitLocation) const
 {
 	FHitResult HitResult;
 	auto StartLocation = PlayerCameraManager->GetCameraLocation();
@@ -101,11 +94,10 @@ bool ATankPlayerController::GetLookVectorHitLocation(FVector LookDirection, FVec
 			)) 
 	{
 		// set hit location
-		OutHitLocation = HitResult.Location;
+		HitLocation = HitResult.Location;
 		return true; // Line trace hits something
-
 	}
 
-	OutHitLocation = FVector(0); // If aiming at the sky (no collision with anything), return 0.
+	HitLocation = FVector(0); // If aiming at the sky (no collision with anything), return 0.
 	return false; // line trace doesnt hit anything
 }
