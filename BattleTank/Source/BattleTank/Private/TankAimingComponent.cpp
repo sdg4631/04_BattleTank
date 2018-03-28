@@ -83,7 +83,7 @@ void UTankAimingComponent::MoveBarrelTowards(FVector AimDirection)
 	auto DeltaRotator = AimAsRotator - BarrelRotator; // The difference in rotation
 	
 
-	Barrel->Elevate(5); // TODO remove magic degrees per second number 
+	Barrel->Elevate(DeltaRotator.Pitch); // TODO remove magic degrees per second number 
 	
 }
 
